@@ -1299,11 +1299,18 @@ void CInputManager::onKeyboardKey(std::any event, SP<IKeyboard> pKeyboard) {
             IME->sendKey(e.timeMs, e.keycode, e.state);
         } else {
             g_pSeatManager->setKeyboard(pKeyboard);
+
+            if (!m_bFirstReleaseHappened && e.state == WL_KEYBOARD_KEY_STATE_RELEASED)
+                g_pSeatManager->sendKeyboardKey(e.timeMs - 10, e.keycode, WL_KEYBOARD_KEY_STATE_PRESSED);
+
             g_pSeatManager->sendKeyboardKey(e.timeMs, e.keycode, e.state);
         }
 
         updateKeyboardsLeds(pKeyboard);
     }
+
+    if (!m_bFirstReleaseHappened && e.state == WL_KEYBOARD_KEY_STATE_RELEASED)
+        m_bFirstReleaseHappened = true;
 }
 
 void CInputManager::onKeyboardMod(SP<IKeyboard> pKeyboard) {

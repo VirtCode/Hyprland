@@ -248,6 +248,12 @@ class CInputManager {
     PHLLSREF               m_pFoundLSToFocus;
     PHLWINDOWREF           m_pFoundWindowToFocus;
 
+    // this stores whether the first release has happened
+    // if not, we should also send the press to the seats, as they might've missed that
+    // as it probably happened before they have adjusted to the new capabilities
+    // see #7568
+    bool m_bFirstReleaseHappened = false;
+
     // for holding focus on buttons held
     bool m_bFocusHeldByButtons   = false;
     bool m_bRefocusHeldByButtons = false;

@@ -84,9 +84,15 @@ void CSeatManager::setKeyboard(SP<IKeyboard> KEEB) {
     if (keyboard == KEEB)
         return;
 
-    if (keyboard)
+    bool set = keyboard;
+    if (set)
         keyboard->active = false;
     keyboard = KEEB;
+
+    // set keyboard focus if first time
+    if (!set && !g_pCompositor->m_pLastFocus.expired() && g_pCompositor->m_pLastFocus) {
+        setKeyboardFocus(g_pCompositor->m_pLastFocus.lock());
+    }
 
     if (KEEB)
         KEEB->active = true;
