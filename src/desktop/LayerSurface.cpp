@@ -435,6 +435,11 @@ void CLayerSurface::applyRules() {
             }
             case CLayerRule::RULE_ABOVELOCK: {
                 aboveLockscreen = true;
+
+                CVarList vars{rule->rule, 0, ' '};
+                try {
+                    aboveLockscreenInteractable = configStringToInt(vars[1]).value_or(false);
+                } catch (...) {}
                 break;
             }
             default: break;
