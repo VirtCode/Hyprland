@@ -1288,9 +1288,12 @@ SP<CWLSurfaceResource> CCompositor::vectorToLayerPopupSurface(const Vector2D& po
     return nullptr;
 }
 
-SP<CWLSurfaceResource> CCompositor::vectorToLayerSurface(const Vector2D& pos, std::vector<PHLLSREF>* layerSurfaces, Vector2D* sCoords, PHLLS* ppLayerSurfaceFound, bool aboveLockscreen) {
+SP<CWLSurfaceResource> CCompositor::vectorToLayerSurface(const Vector2D& pos, std::vector<PHLLSREF>* layerSurfaces, Vector2D* sCoords, PHLLS* ppLayerSurfaceFound,
+                                                         bool aboveLockscreen) {
+
     for (auto const& ls : *layerSurfaces | std::views::reverse) {
-        if (!ls->mapped || ls->fadingOut || !ls->layerSurface || (ls->layerSurface && !ls->layerSurface->surface->mapped) || ls->alpha->value() == 0.f || (aboveLockscreen && (!ls->aboveLockscreen || !ls->aboveLockscreenInteractable)))
+        if (!ls->mapped || ls->fadingOut || !ls->layerSurface || (ls->layerSurface && !ls->layerSurface->surface->mapped) || ls->alpha->value() == 0.f ||
+            (aboveLockscreen && (!ls->aboveLockscreen || !ls->aboveLockscreenInteractable)))
             continue;
 
         auto [surf, local] = ls->layerSurface->surface->at(pos - ls->geometry.pos(), true);
