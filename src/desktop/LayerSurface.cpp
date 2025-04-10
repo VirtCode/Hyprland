@@ -416,9 +416,7 @@ void CLayerSurface::applyRules() {
             }
             case CLayerRule::RULE_XRAY: {
                 CVarList vars{rule->rule, 0, ' '};
-                try {
-                    xray = configStringToInt(vars[1]).value_or(false);
-                } catch (...) {}
+                xray = configStringToInt(vars[1]).value_or(false);
                 break;
             }
             case CLayerRule::RULE_ANIMATION: {
@@ -437,9 +435,7 @@ void CLayerSurface::applyRules() {
                 aboveLockscreen = true;
 
                 CVarList vars{rule->rule, 0, ' '};
-                try {
-                    aboveLockscreenInteractable = configStringToInt(vars[1]).value_or(false);
-                } catch (...) {}
+                aboveLockscreenInteractable = configStringToInt(vars[1]).value_or(false);
                 break;
             }
             default: break;
