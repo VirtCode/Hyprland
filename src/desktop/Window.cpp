@@ -777,6 +777,10 @@ void CWindow::applyDynamicRule(const SP<CWindowRule>& r) {
             g_pHyprRenderer->addWindowToRenderUnfocused(m_pSelf.lock());
             break;
         }
+        case CWindowRule::RULE_OVERLAY: {
+            overlay = true;
+            break;
+        }
         case CWindowRule::RULE_PROP: {
             const CVarList VARS(r->szRule, 0, ' ');
             if (auto search = NWindowProperties::intWindowProperties.find(VARS[1]); search != NWindowProperties::intWindowProperties.end()) {

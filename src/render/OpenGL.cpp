@@ -984,6 +984,7 @@ bool CHyprOpenGLImpl::initShaders() {
         const auto FRAGBLURFINISH         = processShader(m_bCMSupported ? "blurfinish.frag" : "blurfinish_legacy.frag", includes);
         const auto QUADFRAGSRC            = processShader("quad.frag", includes);
         const auto TEXFRAGSRCRGBA         = processShader("rgba.frag", includes);
+        const auto TEXFRAGSRCRGBAFILTER   = processShader("rgba_filter.frag", includes);
         const auto TEXFRAGSRCRGBAPASSTHRU = processShader("passthru.frag", includes);
         const auto TEXFRAGSRCRGBAMATTE    = processShader("rgbamatte.frag", includes);
         const auto FRAGGLITCH             = processShader("glitch.frag", includes);
@@ -1019,6 +1020,26 @@ bool CHyprOpenGLImpl::initShaders() {
         shaders->m_shRGBA.applyTint         = glGetUniformLocation(prog, "applyTint");
         shaders->m_shRGBA.tint              = glGetUniformLocation(prog, "tint");
         shaders->m_shRGBA.useAlphaMatte     = glGetUniformLocation(prog, "useAlphaMatte");
+
+
+        prog = createProgram(shaders->TEXVERTSRC, TEXFRAGSRCRGBAFILTER, isDynamic);
+        if (!prog)
+            return false;
+        shaders->m_shRGBAFILTER.program = prog;
+        getRoundingShaderUniforms(shaders->m_shRGBAFILTER);
+        shaders->m_shRGBAFILTER.proj              = glGetUniformLocation(prog, "proj");
+        shaders->m_shRGBAFILTER.tex               = glGetUniformLocation(prog, "tex");
+        shaders->m_shRGBAFILTER.alphaMatte        = glGetUniformLocation(prog, "texMatte");
+        shaders->m_shRGBAFILTER.alpha             = glGetUniformLocation(prog, "alpha");
+        shaders->m_shRGBAFILTER.texAttrib         = glGetAttribLocation(prog, "texcoord");
+        shaders->m_shRGBAFILTER.matteTexAttrib    = glGetAttribLocation(prog, "texcoordMatte");
+        shaders->m_shRGBAFILTER.posAttrib         = glGetAttribLocation(prog, "pos");
+        shaders->m_shRGBAFILTER.discardOpaque     = glGetUniformLocation(prog, "discardOpaque");
+        shaders->m_shRGBAFILTER.discardAlpha      = glGetUniformLocation(prog, "discardAlpha");
+        shaders->m_shRGBAFILTER.discardAlphaValue = glGetUniformLocation(prog, "discardAlphaValue");
+        shaders->m_shRGBAFILTER.applyTint         = glGetUniformLocation(prog, "applyTint");
+        shaders->m_shRGBAFILTER.tint              = glGetUniformLocation(prog, "tint");
+        shaders->m_shRGBAFILTER.useAlphaMatte     = glGetUniformLocation(prog, "useAlphaMatte");
 
         prog = createProgram(shaders->TEXVERTSRC, TEXFRAGSRCRGBAPASSTHRU, isDynamic);
         if (!prog)
@@ -1483,6 +1504,8 @@ void CHyprOpenGLImpl::renderTextureInternalWithDamage(SP<CTexture> tex, const CB
 
     TRACY_GPU_ZONE("RenderTextureInternalWithDamage");
 
+    // yes we literally check for a magic value in the alpha thing hahahaha fear mee
+    bool other = alpha == 42.0;
     alpha = std::clamp(alpha, 0.f, 1.f);
 
     if (damage.empty())
@@ -1524,7 +1547,7 @@ void CHyprOpenGLImpl::renderTextureInternalWithDamage(SP<CTexture> tex, const CB
             usingFinalShader = true;
         } else {
             switch (tex->m_iType) {
-                case TEXTURE_RGBA: shader = &m_shaders->m_shRGBA; break;
+                case TEXTURE_RGBA: shader = other ? &m_shaders->m_shRGBAFILTER : &m_shaders->m_shRGBA; break;
                 case TEXTURE_RGBX: shader = &m_shaders->m_shRGBX; break;
 
                 case TEXTURE_EXTERNAL: shader = &m_shaders->m_shEXT; break; // might be unused

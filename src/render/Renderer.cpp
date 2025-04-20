@@ -453,6 +453,8 @@ void CHyprRenderer::renderWorkspaceWindows(PHLMONITOR pMonitor, PHLWORKSPACE pWo
 }
 
 void CHyprRenderer::renderWindow(PHLWINDOW pWindow, PHLMONITOR pMonitor, const Time::steady_tp& time, bool decorate, eRenderPassMode mode, bool ignorePosition, bool standalone) {
+    // if (!pWindow->overlay) return;
+
     if (pWindow->isHidden() && !standalone)
         return;
 
@@ -468,7 +470,7 @@ void CHyprRenderer::renderWindow(PHLWINDOW pWindow, PHLMONITOR pMonitor, const T
     TRACY_GPU_ZONE("RenderWindow");
 
     const auto                       PWORKSPACE = pWindow->m_pWorkspace;
-    const auto                       REALPOS    = pWindow->m_vRealPosition->value() + (pWindow->m_bPinned ? Vector2D{} : PWORKSPACE->m_vRenderOffset->value());
+    const auto                       REALPOS    = pWindow->m_vRealPosition->value() + (pWindow->m_bPinned || pWindow->overlay ? Vector2D{} : PWORKSPACE->m_vRenderOffset->value());
     static auto                      PDIMAROUND = CConfigValue<Hyprlang::FLOAT>("decoration:dim_around");
     static auto                      PBLUR      = CConfigValue<Hyprlang::INT>("decoration:blur:enabled");
 
@@ -479,6 +481,7 @@ void CHyprRenderer::renderWindow(PHLWINDOW pWindow, PHLMONITOR pMonitor, const T
     renderdata.pos.y = textureBox.y;
     renderdata.w     = textureBox.w;
     renderdata.h     = textureBox.h;
+    if (pWindow->overlay) renderdata.overlay = true;
 
     if (ignorePosition) {
         renderdata.pos.x = pMonitor->vecPosition.x;
@@ -495,7 +498,7 @@ void CHyprRenderer::renderWindow(PHLWINDOW pWindow, PHLMONITOR pMonitor, const T
         decorate = false;
 
     // whether to use m_fMovingToWorkspaceAlpha, only if fading out into an invisible ws
-    const bool USE_WORKSPACE_FADE_ALPHA = pWindow->m_iMonitorMovedFrom != -1 && (!PWORKSPACE || !PWORKSPACE->isVisible());
+    const bool USE_WORKSPACE_FADE_ALPHA = !pWindow->overlay && pWindow->m_iMonitorMovedFrom != -1 && (!PWORKSPACE || !PWORKSPACE->isVisible());
     const bool DONT_BLUR                = pWindow->m_sWindowData.noBlur.valueOrDefault() || pWindow->m_sWindowData.RGBX.valueOrDefault() || pWindow->opaque();
 
     renderdata.surface   = pWindow->m_pWLSurface->resource();
@@ -1130,13 +1133,15 @@ void CHyprRenderer::calculateUVForSurface(PHLWINDOW pWindow, SP<CWLSurfaceResour
     }
 }
 
+static bool damageTracking = false;
+
 void CHyprRenderer::renderMonitor(PHLMONITOR pMonitor) {
     static std::chrono::high_resolution_clock::time_point renderStart        = std::chrono::high_resolution_clock::now();
     static std::chrono::high_resolution_clock::time_point renderStartOverlay = std::chrono::high_resolution_clock::now();
     static std::chrono::high_resolution_clock::time_point endRenderOverlay   = std::chrono::high_resolution_clock::now();
 
     static auto                                           PDEBUGOVERLAY       = CConfigValue<Hyprlang::INT>("debug:overlay");
-    static auto                                           PDAMAGETRACKINGMODE = CConfigValue<Hyprlang::INT>("debug:damage_tracking");
+    static auto                                           PDAMAGETRACKINGMODE = &damageTracking; // we force damage tracking to false because I don't wanna deal with this
     static auto                                           PDAMAGEBLINK        = CConfigValue<Hyprlang::INT>("debug:damage_blink");
     static auto                                           PDIRECTSCANOUT      = CConfigValue<Hyprlang::INT>("render:direct_scanout");
     static auto                                           PVFR                = CConfigValue<Hyprlang::INT>("misc:vfr");
@@ -1328,6 +1333,10 @@ void CHyprRenderer::renderMonitor(PHLMONITOR pMonitor) {
                 renderWorkspace(pMonitor, pMonitor->activeWorkspace, NOW, renderBox);
 
                 renderLockscreen(pMonitor, NOW, renderBox);
+
+                for (auto const& w : g_pCompositor->m_vWindows) {
+                    if (w->overlay) renderWindow(w, pMonitor, NOW, false, RENDER_PASS_MAIN);
+                }
 
                 if (pMonitor == g_pCompositor->m_pLastMonitor) {
                     g_pHyprNotificationOverlay->draw(pMonitor);

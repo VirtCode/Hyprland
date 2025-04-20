@@ -182,6 +182,8 @@ class CWindow {
     // for recovering relative cursor position
     Vector2D         m_vRelativeCursorCoordsOnLastWarp = Vector2D(-1, -1);
 
+    bool             overlay            = false;
+
     bool             m_bFirstMap        = false; // for layouts
     bool             m_bIsFloating      = false;
     bool             m_bDraggingTiled   = false; // for dragging around tiled windows

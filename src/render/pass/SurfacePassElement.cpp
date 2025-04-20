@@ -10,6 +10,7 @@
 #include <hyprutils/math/Box.hpp>
 #include <hyprutils/math/Vector2D.hpp>
 #include <hyprutils/utils/ScopeGuard.hpp>
+#include <utility>
 using namespace Hyprutils::Utils;
 
 CSurfacePassElement::CSurfacePassElement(const CSurfacePassElement::SRenderData& data_) : data(data_) {
@@ -56,9 +57,12 @@ void CSurfacePassElement::draw(const CRegion& damage) {
 
     auto        PSURFACE = CWLSurface::fromResource(data.surface);
 
-    const float ALPHA         = data.alpha * data.fadeAlpha * (PSURFACE ? PSURFACE->m_fAlphaModifier : 1.F);
+    float ALPHA         = data.alpha * data.fadeAlpha * (PSURFACE ? PSURFACE->m_fAlphaModifier : 1.F);
     const float OVERALL_ALPHA = PSURFACE ? PSURFACE->m_fOverallOpacity : 1.F;
-    const bool  BLUR          = data.blur && (!TEXTURE->m_bOpaque || ALPHA < 1.F || OVERALL_ALPHA < 1.F);
+    const bool  BLUR          = !data.overlay && data.blur && (!TEXTURE->m_bOpaque || ALPHA < 1.F || OVERALL_ALPHA < 1.F);
+
+    // hahahahaha this is so fucking sketchy
+    if (data.overlay) ALPHA = 42.0;
 
     auto        windowBox = getTexBox();
 

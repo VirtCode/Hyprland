@@ -85,6 +85,7 @@ struct SPreparedShaders {
     std::string TEXVERTSRC320;
     CShader     m_shQUAD;
     CShader     m_shRGBA;
+    CShader     m_shRGBAFILTER;
     CShader     m_shPASSTHRURGBA;
     CShader     m_shMATTE;
     CShader     m_shRGBX;
