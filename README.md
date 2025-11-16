@@ -58,3 +58,5 @@ Installation:
 ```sh
 sudo cmake --install build
 ```
+
+If I can make a pr from this fork to the hyprlock repo it would be amazing.
