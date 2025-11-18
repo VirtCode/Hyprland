@@ -7,6 +7,7 @@
 #include "../managers/eventLoop/EventLoopManager.hpp"
 #include "../config/ConfigManager.hpp"
 #include "../debug/HyprNotificationOverlay.hpp"
+#include "../debug/Log.hpp"
 #include <dlfcn.h>
 #include <filesystem>
 
@@ -367,15 +368,22 @@ APICALL std::vector<SFunctionMatch> HyprlandAPI::findFunctionsByName(HANDLE hand
     int                         lineNo = 0;
     while (std::getline(inStream, line)) {
         if (line.contains(name)) {
+            Debug::log(INFO, "[dynamic-debug] considering as candiate: {}", line);
+
             void* address = dlsym(nullptr, line.c_str());
 
-            if (!address)
+            if (!address) {
+                Debug::log(ERR, "[dynamic-debug] could not find symbol for {}", line);
+
                 continue;
+            }
 
             matches.push_back({address, line, demangledFromID(lineNo)});
         }
         lineNo++;
     }
+
+    Debug::log(INFO, "[dynamic-debug] went through {} functions and matched {}", lineNo, matches.size());
 
     return matches;
 }
